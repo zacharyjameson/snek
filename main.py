@@ -109,7 +109,7 @@ while is_running:
 
     window.fill((0, 0, 0))
     counter_text = font.render(
-        f'Food Eaten: {snake.food_eaten}', True, (255, 255, 255))
+        f'{snake.food_eaten}', True, (255, 255, 255))
     counter_text_width, counter_text_height = counter_text.get_size()
     counter_text_x = bounds[0] - counter_text_width - 10
     counter_text_y = 10
