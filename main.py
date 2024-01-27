@@ -1,20 +1,23 @@
 import pygame
-from sys import exit
+from snake import *
 
 pygame.init()
-screen = pygame.display.set_mode((800, 400))
-pygame.display.set_caption('Runner')
+bounds = (300, 300)
+window = pygame.display.set_mode(bounds)
+pygame.display.set_caption("Snake")
+block_size = 20
+snake = Snake(block_size, bounds)
 clock = pygame.time.Clock()
 
-test_surface = pygame.image.load('images/backgrounds.png')
+is_running = True
+while is_running:
+    pygame.time.delay(100)
 
-while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            pygame.quit()
-            exit()
+            is_running = False
 
-    screen.blit(test_surface, (200, 100))
-
-    pygame.display.update()
-    clock.tick(60)
+    window.fill((0, 0, 0))
+    snake.draw(pygame, window)
+    pygame.display.flip()
+    clock.tick(10)
