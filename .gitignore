@@ -1,6 +1,6 @@
 .venv/
-lib/__pycache__/
+lib/__pycache__
 
-.vscode/
+.vscode
 
 *.DS_Store
