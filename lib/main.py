@@ -19,8 +19,15 @@ font = pygame.font.SysFont('pixelmix', 30, True)
 clock = pygame.time.Clock()
 
 db = get_database()
+high_scores = db['High Scores']
 
-print(list(db.list_collections()))
+documents = list(high_scores.find())
+
+if not documents:
+    print("high scores collection is empty")
+else:
+    for document in documents:
+        print(document)
 
 
 def start_screen():
