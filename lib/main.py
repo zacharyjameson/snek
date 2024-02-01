@@ -3,6 +3,8 @@ from pygame.locals import KEYDOWN, K_RETURN
 from snake import *
 from food import Food
 
+from api import get_database
+
 pygame.init()
 bounds = (600, 600)
 window = pygame.display.set_mode(bounds)
@@ -15,6 +17,10 @@ food = Food(block_size, bounds)
 font = pygame.font.SysFont('pixelmix', 30, True)
 
 clock = pygame.time.Clock()
+
+db = get_database()
+
+print(list(db.list_collections()))
 
 
 def start_screen():
