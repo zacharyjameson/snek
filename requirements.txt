@@ -1,0 +1,4 @@
+dnspython==2.5.0
+pygame==2.5.0
+pymongo==4.6.1
+python-dotenv==1.0.1
