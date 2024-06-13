@@ -20,14 +20,15 @@ clock = pygame.time.Clock()
 
 db = get_database()
 high_scores = db['High Scores']
-
+print(high_scores)
 documents = list(high_scores.find())
 
 if not documents:
     print("high scores collection is empty")
+    high_scores.insert_one({"_id": "ZACK", "score": 22})
 else:
     for document in documents:
-        print(document)
+        print("High Scores: ", document)
 
 
 def start_screen():
@@ -54,7 +55,7 @@ def start_screen():
 start_screen()
 
 
-def display_game_over():
+def display_game_over(food_eaten):
     text = font.render('Game Over', True, (255, 255, 255))
     text_width, text_height = text.get_size()
     x = (bounds[0] - text_width) // 2
@@ -62,12 +63,21 @@ def display_game_over():
     window.blit(text, (x, y))
     pygame.display.update()
 
+    # Display Final Score
+    final_score = font.render(
+        f'Final Score: {food_eaten}', True, (255, 255, 255))
+    score_width, score_height = final_score.get_size()
+    score_x = (bounds[0] - score_width) // 2
+    score_y = y + text_height + 20
+    window.blit(final_score, (score_x, score_y))
+    pygame.display.update()
+
     # Display "Press Enter to Respawn" message
     respawn_text = font.render(
         'Press ENTER to Continue', True, (255, 255, 255))
     respawn_width, respawn_height = respawn_text.get_size()
     respawn_x = (bounds[0] - respawn_width) // 2
-    respawn_y = y + text_height + 20
+    respawn_y = score_y + text_height + 20
     blink_timer = 0
     blink_frequency = 500
     visible = True
@@ -88,6 +98,7 @@ def display_game_over():
 
         window.fill((0, 0, 0))
         window.blit(text, (x, y))
+        window.blit(final_score, (score_x, score_y))
         if visible:
             window.blit(respawn_text, (respawn_x, respawn_y))
 
@@ -116,7 +127,7 @@ while is_running:
 
     # Check for game over
     if snake.check_bounds() == True or snake.check_tail_collision() == True:
-        display_game_over()
+        display_game_over(snake.food_eaten)
         snake.respawn()
         food.respawn()
 
