@@ -1,3 +1,4 @@
+# snake.py
 from enum import Enum
 
 
@@ -9,13 +10,6 @@ class Direction(Enum):
 
 
 class Snake:
-    length = None
-    direction = None
-    body = None
-    block_size = None
-    color = (0, 0, 255)
-    bounds = None
-
     def __init__(self, block_size, bounds):
         self.block_size = block_size
         self.bounds = bounds
@@ -24,74 +18,58 @@ class Snake:
 
     def respawn(self):
         self.length = 3
-        self.body = [(20, 20), (20, 40), (20, 60)]
-        self.direction = Direction.DOWN
-        self.food_eaten = 0
-
-    def draw(self, game, window):
-        for segment in self.body:
-            game.draw.rect(
-                window, self.color, (segment[0], segment[1], self.block_size, self.block_size))
+        self.direction = Direction.RIGHT
+        self.body = [(200, 200), (220, 200), (240, 200)]
 
     def move(self):
-        curr_head = self.body[-1]
-        if self.direction == Direction.DOWN:
-            next_head = (curr_head[0], curr_head[1] + self.block_size)
-            self.body.append(next_head)
-        elif self.direction == Direction.UP:
-            next_head = (curr_head[0], curr_head[1] - self.block_size)
-            self.body.append(next_head)
-        elif self.direction == Direction.RIGHT:
-            next_head = (curr_head[0] + self.block_size, curr_head[1])
-            self.body.append(next_head)
+        head = self.body[-1]
+        if self.direction == Direction.UP:
+            new_head = (head[0], head[1] - self.block_size)
+        elif self.direction == Direction.DOWN:
+            new_head = (head[0], head[1] + self.block_size)
         elif self.direction == Direction.LEFT:
-            next_head = (curr_head[0] - self.block_size, curr_head[1])
-            self.body.append(next_head)
-
-        if self.length < len(self.body):
+            new_head = (head[0] - self.block_size, head[1])
+        elif self.direction == Direction.RIGHT:
+            new_head = (head[0] + self.block_size, head[1])
+        self.body.append(new_head)
+        if len(self.body) > self.length:
             self.body.pop(0)
 
     def steer(self, direction):
-        if self.direction == Direction.DOWN and direction != Direction.UP:
-            self.direction = direction
-        elif self.direction == Direction.UP and direction != Direction.DOWN:
-            self.direction = direction
-        elif self.direction == Direction.LEFT and direction != Direction.RIGHT:
-            self.direction = direction
-        elif self.direction == Direction.RIGHT and direction != Direction.LEFT:
-            self.direction = direction
+        if direction == Direction.UP and self.direction != Direction.DOWN:
+            self.direction = Direction.UP
+        elif direction == Direction.DOWN and self.direction != Direction.UP:
+            self.direction = Direction.DOWN
+        elif direction == Direction.LEFT and self.direction != Direction.RIGHT:
+            self.direction = Direction.LEFT
+        elif direction == Direction.RIGHT and self.direction != Direction.LEFT:
+            self.direction = Direction.RIGHT
 
     def eat(self):
+        self.food_eaten += 1
         self.length += 1
 
     def check_for_food(self, food):
         head = self.body[-1]
-        if head[0] == food.x and head[1] == food.y:
+        if head == (food.x, food.y):
             self.eat()
-            self.food_eaten += 1
-            food.respawn()
+            return True
+        return False
 
     def check_tail_collision(self):
         head = self.body[-1]
-        has_eaten_tail = False
-
-        for i in range(len(self.body) - 1):
-            segment = self.body[i]
-            if head[0] == segment[0] and head[1] == segment[1]:
-                has_eaten_tail = True
-
-        return has_eaten_tail
+        for pos in self.body[:-1]:
+            if head == pos:
+                return True
+        return False
 
     def check_bounds(self):
         head = self.body[-1]
-        if head[0] >= self.bounds[0]:
+        if head[0] < 0 or head[0] >= self.bounds[0] or head[1] < 0 or head[1] >= self.bounds[1]:
             return True
-        if head[1] >= self.bounds[1]:
-            return True
-
-        if head[0] < 0:
-            return True
-        if head[1] < 0:
-            return True
-
         return False
+
+    def draw(self, game, window):
+        for pos in self.body:
+            game.draw.rect(window, (0, 0, 255),
+                           (pos[0], pos[1], self.block_size, self.block_size))
