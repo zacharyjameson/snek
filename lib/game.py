@@ -11,15 +11,18 @@ class Game:
         self.bounds = (600, 600)
         self.window = pygame.display.set_mode(self.bounds)
         self.clock = pygame.time.Clock()
+        self.clock_tick_rate = 10
         self.snake = Snake(20, self.bounds)
         self.food = Food(20, self.bounds)
         self.db = get_database()
         self.high_scores = self.db['High Scores']
-        high_score_doc = self.high_scores.find_one({"_id": "ZACK"})
-        if high_score_doc:
-            self.high_score = high_score_doc["score"]
-        else:
+        scores_doc = self.high_scores.find_one({"_id": "SCORES"})
+        if scores_doc is None:
             self.high_score = 0
+        else:
+            scores = [list(score.values())[0]
+                      for score in scores_doc["scores"]]
+            self.high_score = max(scores) if scores else 0
         self.font = pygame.font.SysFont('pixelmix', 30, True)
         self.start_screen()
 
@@ -46,53 +49,43 @@ class Game:
 
         self.run()
 
+    def increment_speed(self):
+        self.clock_tick_rate += .25
+
     def run(self):
         running = True
-        game_speed = 15
-        clock_tick_rate = 60
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        self.snake.steer(Direction.LEFT)
-                    elif event.key == pygame.K_RIGHT:
-                        self.snake.steer(Direction.RIGHT)
-                    elif event.key == pygame.K_UP:
-                        self.snake.steer(Direction.UP)
-                    elif event.key == pygame.K_DOWN:
-                        self.snake.steer(Direction.DOWN)
 
-                keys = pygame.key.get_pressed()
-                if keys[pygame.K_LEFT]:
-                    self.snake.steer(Direction.LEFT)
-                elif keys[pygame.K_RIGHT]:
-                    self.snake.steer(Direction.RIGHT)
-                elif keys[pygame.K_UP]:
-                    self.snake.steer(Direction.UP)
-                elif keys[pygame.K_DOWN]:
-                    self.snake.steer(Direction.DOWN)
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                self.snake.steer(Direction.LEFT)
+            elif keys[pygame.K_RIGHT]:
+                self.snake.steer(Direction.RIGHT)
+            elif keys[pygame.K_UP]:
+                self.snake.steer(Direction.UP)
+            elif keys[pygame.K_DOWN]:
+                self.snake.steer(Direction.DOWN)
 
-                self.snake.move()
-                if self.snake.check_for_food(self.food):
-                    self.food.respawn()
-                    self.snake.eat()
+            self.snake.move()
+            if self.snake.check_for_food(self.food):
+                self.food.respawn()
+                self.increment_speed()
 
-                if self.snake.check_bounds() or self.snake.check_tail_collision():
-                    self.game_over()
+            if self.snake.check_bounds() or self.snake.check_tail_collision():
+                self.game_over()
 
-                self.window.fill((0, 0, 0))
-                self.snake.draw(pygame, self.window)
-                self.food.draw(pygame, self.window)
-                score_text = self.font.render(
-                    f'Score: {self.snake.length - 3}', True, (255, 255, 255))
-                self.window.blit(score_text, (10, 10))
-                pygame.display.flip()
+            self.window.fill((0, 0, 0))
+            self.snake.draw(pygame, self.window)
+            self.food.draw(pygame, self.window)
+            score_text = self.font.render(
+                f'Score: {self.snake.food_eaten}', True, (255, 255, 255))
+            self.window.blit(score_text, (10, 10))
+            pygame.display.flip()
 
-                self.clock.tick(clock_tick_rate)
-                pygame.time.delay(1000 // game_speed)
-
+            self.clock.tick(self.clock_tick_rate)
         pygame.quit()
 
     def game_over(self):
@@ -101,11 +94,11 @@ class Game:
         self.window.blit(
             game_over_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2 - 50))
         score_text = self.font.render(
-            f'Final Score: {self.snake.length - 3}', True, (255, 255, 255))
+            f'Final Score: {self.snake.food_eaten}', True, (255, 255, 255))
         self.window.blit(
             score_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2))
         high_score_text = self.font.render(
-            f'High Score: {self.high_score}', True, (255, 255, 255))
+            f'High Scores: {self.high_score}', True, (255, 255, 255))
         self.window.blit(
             high_score_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2 + 50))
         press_return_text = self.font.render(
@@ -113,6 +106,7 @@ class Game:
         self.window.blit(press_return_text,
                          (self.bounds[0] // 2 - 100, self.bounds[1] // 2 + 100))
         pygame.display.flip()
+        self.save_high_score()
         waiting = True
         while waiting:
             for event in pygame.event.get():
@@ -121,19 +115,25 @@ class Game:
                 elif event.type == KEYDOWN:
                     if event.key == K_RETURN:
                         waiting = False
-                        self.save_high_score()
                         self.snake.respawn()
                         self.food.respawn()
+                        self.clock_tick_rate = 10
+                        self.snake.food_eaten = 0
                         self.run()
         pygame.quit()
 
     def save_high_score(self):
-        documents = list(self.high_scores.find())
-        if not documents:
-            self.high_scores.insert_one(
-                {"_id": "ZACK", "score": self.snake.length - 3})
-        else:
-            max_score = max(doc['score'] for doc in documents)
-            if self.snake.length - 3 > max_score:
-                self.high_scores.update_one(
-                    {"_id": "ZACK"}, {"$set": {"score": self.snake.length - 3}})
+        scores_doc = self.high_scores.find_one({"_id": "SCORES"})
+
+        if scores_doc is None:
+            scores_doc = {"_id": "SCORES", "scores": []}
+            self.high_scores.insert_one(scores_doc)
+
+        new_score = {"ZACK": self.snake.food_eaten}
+
+        scores_doc["scores"].append(new_score)
+        scores = sorted([list(score.values())[0]
+                        for score in scores_doc["scores"]], reverse=True)
+        scores_doc["scores"] = [{"ZACK": score} for score in scores[:10]]
+
+        self.high_scores.update_one({"_id": "SCORES"}, {"$set": scores_doc})
