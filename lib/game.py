@@ -18,11 +18,9 @@ class Game:
         self.high_scores = self.db['High Scores']
         scores_doc = self.high_scores.find_one({"_id": "SCORES"})
         if scores_doc is None:
-            self.high_score = 0
+            self.high_score_list = []
         else:
-            scores = [list(score.values())[0]
-                      for score in scores_doc["scores"]]
-            self.high_score = max(scores) if scores else 0
+            self.high_score_list = scores_doc['scores']
         self.font = pygame.font.SysFont('pixelmix', 30, True)
         self.start_screen()
 
@@ -90,24 +88,29 @@ class Game:
 
     def game_over(self):
         self.window.fill((0, 0, 0))
-        game_over_text = self.font.render('Game Over', True, (255, 255, 255))
+        game_over_text = self.font.render('Game Over!', True, (255, 255, 255))
         self.window.blit(
-            game_over_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2 - 50))
+            game_over_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2 - 175))
         score_text = self.font.render(
             f'Final Score: {self.snake.food_eaten}', True, (255, 255, 255))
         self.window.blit(
-            score_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2))
-        high_score_text = self.font.render(
-            f'High Scores: {self.high_score}', True, (255, 255, 255))
-        self.window.blit(
-            high_score_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2 + 50))
+            score_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2 - 150))
         press_return_text = self.font.render(
-            'Press Enter to play again', True, (255, 255, 255))
-        self.window.blit(press_return_text,
-                         (self.bounds[0] // 2 - 100, self.bounds[1] // 2 + 100))
+            'Press ENTER to play again', True, (255, 255, 255))
+        press_return_text_rect = press_return_text.get_rect(
+            center=(self.bounds[0] // 2, self.bounds[1] // 2 - 100))
+        self.window.blit(press_return_text, press_return_text_rect)
+        y = self.bounds[1] // 2 - 50
+        for i, score in enumerate(self.high_score_list):
+            high_score_text = self.font.render(
+                f'{i+1}. {list(score.keys())[0]}: {list(score.values())[0]}', True, (255, 255, 255))
+            self.window.blit(high_score_text, (self.bounds[0] // 2 - 100, y))
+            y += 30
         pygame.display.flip()
         self.save_high_score()
         waiting = True
+        clock = pygame.time.Clock()
+        flash = True
         while waiting:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -120,6 +123,14 @@ class Game:
                         self.clock_tick_rate = 10
                         self.snake.food_eaten = 0
                         self.run()
+            if flash:
+                self.window.blit(press_return_text, press_return_text_rect)
+            else:
+                self.window.blit(self.font.render(
+                    'Press ENTER to play again', True, (0, 0, 0)), press_return_text_rect)
+            flash = not flash
+            pygame.display.flip()
+            clock.tick(2)
         pygame.quit()
 
     def save_high_score(self):
