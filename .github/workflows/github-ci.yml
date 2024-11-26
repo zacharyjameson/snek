@@ -1,0 +1,31 @@
+name: Chamber of Secrets
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  howdy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: KnockKnock
+        run: echo "There's somebody at the door!"
+
+  validate_db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: MongoDB Install
+        run: |
+          echo "Installing MongoDB Tools"
+          sudo apt-get update
+          sudo apt-get install -y mongodb-mongosh
+
+      - name: Validate DB
+        env:
+          MONGODB_URI: "mongodb+srv://khazaddum.vcmwm7d.mongodb.net/"
+          MONGO_USER: "gimli"
+        run: |
+          echo "Pinging Khazad Dum"
+          mongosh $MONGODB_URI --apiVersion 1 --username $MONGO_USER --eval "db.runCommand({ping: 1})" || echo "Khazad Dum is down"
