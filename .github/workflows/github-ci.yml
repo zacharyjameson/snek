@@ -3,8 +3,7 @@ name: Chamber of Secrets
 on:
   push:
     branches:
-      - main
-      - feature/*
+      - "*"
 
 jobs:
   howdy:
