@@ -1,9 +1,6 @@
 name: Chamber of Secrets
 
-on:
-  push:
-    branches:
-      - "*"
+on: [push]
 
 jobs:
   howdy:
