@@ -1,0 +1,10 @@
+name: Chamber of Secrets
+
+on: [push]
+
+jobs:
+  howdy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: KnockKnock
+        run: echo "There's somebody at the door!"
