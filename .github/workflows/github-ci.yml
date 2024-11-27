@@ -29,7 +29,7 @@ jobs:
         run: |
           python -c "
           from pymongo import MongoClient
-          client = MongoClient('mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGODB_URL}')
+          client = MongoClient('mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_CLUSTER_URL}')
           db = client.test
           print('Pinged MongoDB successfully!')
           "
