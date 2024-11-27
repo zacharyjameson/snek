@@ -11,12 +11,15 @@ jobs:
 
   validate_db:
     runs-on: ubuntu-latest
+    container:
+      image: python:3.10
     steps:
-      # - name: MongoDB Install
-      #   run: |
-      #     echo "Installing MongoDB Tools"
-      #     sudo apt-get update
-      #     sudo apt-get install -y mongodb-mongosh
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install pymongo
+        run: |
+          pip install pymongo
 
       - name: Connect and Ping MongoDB
         env:
@@ -24,5 +27,9 @@ jobs:
           MONGO_USER: ${{ secrets.MONGO_USER }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
         run: |
-          echo "Pinging Khazad Dum"
-          docker run --rm mongo mongosh "mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_CLUSTER_URL}/?retryWrites=true&w=majority" --eval "db.runCommand({ping: 1})" || echo "Khazad Dum is down! :["
+          python -c "
+          from pymongo import MongoClient
+          client = MongoClient('mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGODB_URL}')
+          db = client.test
+          print('Pinged MongoDB successfully!')
+          "
