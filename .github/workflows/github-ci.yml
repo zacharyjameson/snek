@@ -12,20 +12,10 @@ jobs:
   validate_db:
     runs-on: ubuntu-latest
     container:
-      image: python:3.10
+      image: mongo:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Install MongoDB Tools
-        run: |
-          echo "Installing MongoDB Tools"
-          sudo apt-get update
-          sudo apt-get install -y gnupg
-          curl -fsSL https://pgp.mongodb.com/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-          sudo apt-get update
-          sudo apt-get install -y mongodb-mongosh
 
       - name: Connect and Ping MongoDB
         env:
