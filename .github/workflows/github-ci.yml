@@ -17,19 +17,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install pymongo
-        run: |
-          pip install pymongo
-
       - name: Connect and Ping MongoDB
         env:
           MONGO_CLUSTER_URL: ${{ secrets.MONGO_CLUSTER_URL }}
           MONGO_USER: ${{ secrets.MONGO_USER }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
         run: |
-          python -c "
-          from pymongo import MongoClient
-          client = MongoClient('mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_CLUSTER_URL}')
-          db = client.test
-          print('Pinged MongoDB successfully!')
-          "
+          mongosh "mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_CLUSTER_URL}/Snake?retryWrites=true&w=majority" --eval "db.getCollection('High Scores').countDocuments()" || echo "MongoDB is down"
