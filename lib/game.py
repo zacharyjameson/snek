@@ -100,6 +100,8 @@ class Game:
         press_return_text_rect = press_return_text.get_rect(
             center=(self.bounds[0] // 2, self.bounds[1] // 2 - 100))
         self.window.blit(press_return_text, press_return_text_rect)
+        self.save_high_score()
+
         y = self.bounds[1] // 2 - 50
         for i, score in enumerate(self.high_score_list):
             high_score_text = self.font.render(
@@ -107,7 +109,6 @@ class Game:
             self.window.blit(high_score_text, (self.bounds[0] // 2 - 100, y))
             y += 30
         pygame.display.flip()
-        self.save_high_score()
         waiting = True
         clock = pygame.time.Clock()
         flash = True
@@ -147,4 +148,5 @@ class Game:
                         for score in scores_doc["scores"]], reverse=True)
         scores_doc["scores"] = [{"ZACK": score} for score in scores[:10]]
 
+        self.high_score_list = [{"ZACK": score} for score in scores[:10]]
         self.high_scores.update_one({"_id": "SCORES"}, {"$set": scores_doc})
