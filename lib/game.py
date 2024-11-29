@@ -187,7 +187,10 @@ class Game:
             self.window.blit(
                 prompt_text, (self.bounds[0] // 2 - 150, self.bounds[1] // 2 - 50))
             self.window.blit(
-                name_text, (self.bounds[0] // 2 - 50, self.bounds[1] // 2))
+                name_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2))
             pygame.display.flip()
+
+        self.window.fill((0, 0, 0))
+        pygame.display.flip()
 
         return name
