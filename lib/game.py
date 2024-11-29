@@ -21,6 +21,7 @@ class Game:
             self.high_score_list = []
         else:
             self.high_score_list = scores_doc['scores']
+        self.new_score = {"NEW_PLAYER": 0}
         self.font = pygame.font.SysFont('pixelmix', 30, True)
         self.start_screen()
 
@@ -73,6 +74,7 @@ class Game:
                 self.increment_speed()
 
             if self.snake.check_bounds() or self.snake.check_tail_collision():
+                self.new_score = {"NEW_PLAYER": self.snake.food_eaten}
                 self.game_over()
 
             self.window.fill((0, 0, 0))
@@ -100,14 +102,9 @@ class Game:
         press_return_text_rect = press_return_text.get_rect(
             center=(self.bounds[0] // 2, self.bounds[1] // 2 - 100))
         self.window.blit(press_return_text, press_return_text_rect)
-        y = self.bounds[1] // 2 - 50
-        for i, score in enumerate(self.high_score_list):
-            high_score_text = self.font.render(
-                f'{i+1}. {list(score.keys())[0]}: {list(score.values())[0]}', True, (255, 255, 255))
-            self.window.blit(high_score_text, (self.bounds[0] // 2 - 100, y))
-            y += 30
+        self.check_for_high_score()
+        self.display_top_ten()
         pygame.display.flip()
-        self.save_high_score()
         waiting = True
         clock = pygame.time.Clock()
         flash = True
@@ -134,17 +131,66 @@ class Game:
         pygame.quit()
 
     def save_high_score(self):
-        scores_doc = self.high_scores.find_one({"_id": "SCORES"})
+        self.high_scores.update_one(
+            {"_id": "SCORES"}, {"$set": {"scores": self.high_score_list}})
 
-        if scores_doc is None:
-            scores_doc = {"_id": "SCORES", "scores": []}
-            self.high_scores.insert_one(scores_doc)
+    def check_for_high_score(self):
+        for old_score in self.high_score_list:
+            if self.snake.food_eaten > list(old_score.values())[0]:
+                print("New high score! You beat: ",
+                      list(old_score.values())[0])
+                player_name = self.get_player_name()
+                print(player_name)
+                if not player_name:
+                    print("no player name found")
+                    player_name = "NONE"
+                self.new_score = {player_name: self.snake.food_eaten}
+                self.high_score_list.append(self.new_score)
+                self.high_score_list = sorted(
+                    self.high_score_list, key=lambda x: list(x.values())[0], reverse=True)[:10]
+                print("Check for high score high score list",
+                      self.high_score_list)
+                self.save_high_score()
+                break
+            else:
+                print(list(old_score.values())[
+                      0], "is not a high score. Try again!")
 
-        new_score = {"ZACK": self.snake.food_eaten}
+    def display_top_ten(self):
+        y = self.bounds[1] // 2 - 50
+        for i, score in enumerate(self.high_score_list):
+            high_score_text = self.font.render(
+                f'{i+1}. {list(score.keys())[0]}: {list(score.values())[0]}', True, (255, 255, 255))
+            self.window.blit(high_score_text, (self.bounds[0] // 2 - 100, y))
+            y += 30
 
-        scores_doc["scores"].append(new_score)
-        scores = sorted([list(score.values())[0]
-                        for score in scores_doc["scores"]], reverse=True)
-        scores_doc["scores"] = [{"ZACK": score} for score in scores[:10]]
+    def get_player_name(self):
+        name = ""
+        active = True
+        while active:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == KEYDOWN:
+                    if event.key == K_RETURN:
+                        active = False
+                    elif event.key == pygame.K_BACKSPACE:
+                        name = name[:-1]
+                    elif len(name) < 4 and event.unicode.isalnum():
+                        name += event.unicode.upper()
 
-        self.high_scores.update_one({"_id": "SCORES"}, {"$set": scores_doc})
+            self.window.fill((0, 0, 0))
+            prompt_text = self.font.render(
+                'Player Name: ', True, (255, 255, 255))
+            name_text = self.font.render(name, True, (255, 255, 255))
+            self.window.blit(
+                prompt_text, (self.bounds[0] // 2 - 150, self.bounds[1] // 2 - 50))
+            self.window.blit(
+                name_text, (self.bounds[0] // 2 - 100, self.bounds[1] // 2))
+            pygame.display.flip()
+
+        self.window.fill((0, 0, 0))
+        pygame.display.flip()
+
+        return name
